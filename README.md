@@ -158,6 +158,42 @@ Tracking scalars use a rolling buffer; use evaluation reports for controlled
 comparisons. Training or viewing can also run on macOS using CPU; Spark-specific
 GPU results require separate verification.
 
+## Save a simulation video
+
+On the Spark, install system FFmpeg once if needed, then render a checkpoint:
+
+```bash
+sudo apt install ffmpeg
+./scripts/record.sh --checkpoint latest --seconds 10 --output videos/reachy.mp4
+```
+
+This renders a fresh simulation replay to H.264 MP4, including the moving red
+target. No browser, desktop session, or Viser server is needed. The Linux wrapper
+selects MuJoCo's EGL backend for headless NVIDIA rendering. It requires working
+EGL libraries/drivers on the Spark. If EGL initialization fails, check the NVIDIA
+driver and EGL installation; a desktop session can instead try `MUJOCO_GL=glfw`.
+The default is 1280x720 at 25 fps, with a 10-second simulated duration. Rendering
+can take more or less wall time; the MP4 still plays at the requested frame rate.
+
+```bash
+# Record the proportional baseline without a trained policy:
+./scripts/record.sh --controller proportional --seconds 10 --output videos/baseline.mp4
+# Smaller file, closer camera:
+./scripts/record.sh --checkpoint latest --width 640 --height 360 --distance 1.6 --output videos/close.mp4
+```
+
+Use `--azimuth` and `--elevation` to change the overview angle. `--seed` selects
+the target trajectory. Episodes reset every 10 simulated seconds, so longer clips
+include resets. Recording uses its own fixed camera, not your current Viser camera,
+and does not capture the browser UI or audio. Existing output files are protected;
+use a new name or explicitly pass `--overwrite`.
+
+Copy the clip to your Mac:
+
+```bash
+scp saiseeker@spark-c64c:~/repos/reachy-rl/videos/reachy.mp4 ~/Downloads/
+```
+
 ## Development and next experiments
 
 ```bash

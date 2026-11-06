@@ -26,3 +26,13 @@ Linux ARM64 / CUDA dependency resolution is included in `uv.lock`, but execution
 on the DGX Spark has not been validated. No physical robot was connected or
 controlled. Test models, virtual environments, logs, and downloaded assets are
 excluded from the source repository.
+
+## MP4 recording
+
+The recording extension passed seven tests in total, including FFmpeg output
+dimensions, encoded duration/frame count, existing-file protection, and cleanup
+after an incomplete recording. A real MuJoCo replay using the proportional
+controller produced a 640x360 H.264 clip with 50 frames at 25 fps (2.00 seconds).
+A second clip verified the final overview framing and visible target marker.
+Offscreen rendering was tested on macOS; the Linux EGL path still requires
+verification on the DGX Spark. Recording does not capture the Viser browser UI.
