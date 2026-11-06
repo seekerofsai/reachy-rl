@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "reachy-rl"
+version = "0.1.0"
+description = "Reachy Mini synthetic gaze tracking in MuJoCo with PPO"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "numpy>=2,<3", "scipy>=1.14,<2", "mujoco==3.3.0",
+  "gymnasium>=1.1,<2", "stable-baselines3>=2.7,<3",
+  "torch>=2.8,<3", "tensorboard>=2.18,<3",
+  "reachy-mini-rust-kinematics>=1.0.3,<2", "viser>=1,<2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[project.scripts]
+reachy-rl = "reachy_rl.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/reachy_rl"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu130", marker = "sys_platform == 'linux' and platform_machine == 'aarch64'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
