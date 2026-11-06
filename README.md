@@ -158,7 +158,32 @@ Tracking scalars use a rolling buffer; use evaluation reports for controlled
 comparisons. Training or viewing can also run on macOS using CPU; Spark-specific
 GPU results require separate verification.
 
+## Experiment: recover after a 1–2-second target occlusion
+
+The reacquisition experiment adds a seeded detector outage while the target
+continues moving. Compare a PPO policy with 64 past observation frames (2.56
+seconds of history), a policy without history, your original tracking PPO, and
+the proportional baseline. Recovery means recentering the target and holding
+it for 0.2 seconds within a 2-second deadline after reappearance.
+
+```bash
+./scripts/reacquisition.sh smoke
+./scripts/reacquisition.sh train --history 64 --timesteps 500000 --num-envs 8
+./scripts/reacquisition.sh evaluate --memory latest --tracking latest --episodes 50
+./scripts/reacquisition.sh play --checkpoint latest
+```
+
+`--tracking latest` requires an original tracking checkpoint in `runs/*/final.zip`;
+omit that argument to compare just the history policy and proportional baseline.
+Use `reacquisition.sh` for these models; the original train/evaluate/play scripts
+retain the original tracking interface. Experiment artifacts live separately in
+`runs/reacquisition/`. Existing TensorBoard and SSH tunnel scripts work with it.
+See the [experiment instructions](experiments/reacquisition.md) for the full
+comparison, metrics, resuming, and interpretation of failures.
+
 ## Save a simulation video
+
+Example clip: [Watch the Reachy simulation](reachy.mp4).
 
 On the Spark, install system FFmpeg once if needed, then render a checkpoint:
 

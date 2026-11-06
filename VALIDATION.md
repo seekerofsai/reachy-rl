@@ -36,3 +36,24 @@ controller produced a 640x360 H.264 clip with 50 frames at 25 fps (2.00 seconds)
 A second clip verified the final overview framing and visible target marker.
 Offscreen rendering was tested on macOS; the Linux EGL path still requires
 verification on the DGX Spark. Recording does not capture the Viser browser UI.
+
+## Target-reacquisition experiment
+
+The additive experiment passed 13 tests in total, including the original task and
+recording checks. New checks cover the 768-value observation-history interface,
+seeded resets, matching current observations/target paths across history lengths,
+forced outage timing and held detector values while the target continues moving,
+stable recovery timing, explicit failure records, and invalid configurations.
+
+Both history=64 and history=1 PPO smoke runs completed 2,048 transitions. A
+comparison against the original tracking smoke policy and proportional baseline
+produced reports with identical episode seeds and occlusion schedules. Failed
+recoveries retained null latency rather than being omitted. In the three-episode
+smoke comparison, the history policy recovered in 0/3 cases and the proportional
+baseline in 3/3; the short run does not demonstrate a benefit from observation
+history. Larger budgets and multiple training/evaluation seeds remain necessary.
+
+Subprocess-vectorized experiment training, periodic checkpoints, resumed learning,
+and headless experiment playback were also checked on local CPU. Spark execution
+and hardware transfer remain unverified. No trained model or evaluation result is
+included in the source repository.
