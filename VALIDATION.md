@@ -57,3 +57,36 @@ Subprocess-vectorized experiment training, periodic checkpoints, resumed learnin
 and headless experiment playback were also checked on local CPU. Spark execution
 and hardware transfer remain unverified. No trained model or evaluation result is
 included in the source repository.
+
+## Residual RL and photo framing/capture timing
+
+The extension passed 22 tests in total on local macOS CPU. New checks cover exact
+zero-residual equivalence to proportional control, correction bounds and applied
+action history, photo Gymnasium interfaces and seeded resets, continuous target
+pauses, baseline captures versus no-capture timeout, shutter rising edges/cooldown/
+attempt budgets, stability-dependent shot validity, and labelled PNG previews.
+
+Both experiments completed 2,048-transition PPO smoke runs, save/reload, evaluation,
+and headless playback. Residual comparisons against the original tracking and
+reacquisition policies and a five-step delay stress cohort completed. No advantage
+over proportional tracking was established by the short residual run.
+
+Photo training uses categorical `MultiDiscrete([3,3,3,2])` actions so deterministic
+playback uses the same explicit capture/wait decision learned during training. A
+100,000-transition photo validation run (rounded to 100,352 transitions by PPO)
+achieved valid first captures in 10/10 episodes at seeds 10000–10009. The heuristic
+baseline also succeeded in 10/10. Mean successful capture time was 2.344 seconds
+for the learned policy and 2.740 seconds for the baseline. These are small local
+validation results, not a robust performance claim; further seeds and training
+replicates are required. Photographs and real detections were not used.
+
+Spawn-based subprocess training and resumed learning were checked for both
+experiments. The photo browser preview showed the simulated robot, framing diagram,
+and live outcome updates. MP4 tests covered residual/photo workflows and regression
+of the original tracking recorder; a 640x360 photo clip encoded 75 frames at 25 fps
+for exactly 3.00 seconds, including the synthetic framing inset.
+
+The new sources retain simulation-only operation. Execution on DGX Spark/CUDA/EGL,
+real-camera framing, and physical hardware transfer remain unverified. Generated
+models, videos, capture previews and evaluation reports are not part of the source
+changes.

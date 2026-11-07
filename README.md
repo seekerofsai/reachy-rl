@@ -181,6 +181,50 @@ retain the original tracking interface. Experiment artifacts live separately in
 See the [experiment instructions](experiments/reacquisition.md) for the full
 comparison, metrics, resuming, and interpretation of failures.
 
+## Residual RL: learned corrections to proportional tracking
+
+The residual experiment keeps the reacquisition task/reward and composes bounded
+PPO corrections with the proportional controller. Zero correction reproduces the
+baseline. Defaults use 64 past observation frames and a 0.25 correction scale.
+
+```bash
+./scripts/residual.sh smoke
+./scripts/residual.sh train --timesteps 500000 --num-envs 8
+./scripts/residual.sh evaluate --episodes 50 --compare-reacquisition latest --compare-tracking latest
+./scripts/residual.sh play --checkpoint latest
+./scripts/residual.sh record --checkpoint latest --seconds 10 --output videos/residual.mp4
+```
+
+Omit either comparison flag if that earlier policy has not been trained. Reports
+include the proportional baseline automatically. Artifacts live in `runs/residual/`.
+See [residual RL instructions](experiments/residual.md) for action semantics,
+delay-stress evaluation, metrics, and resume behavior.
+
+## Photo framing and virtual capture timing
+
+This simulation task projects one synthetic face box through Reachy's eye camera.
+The policy makes framing corrections and decides when to trigger a virtual shutter.
+Composition, visibility, image motion, and stability determine shot validity.
+The preview/captured PNGs are labelled diagrams, not real camera photos.
+
+```bash
+./scripts/photo.sh smoke
+./scripts/photo.sh train --timesteps 500000 --num-envs 8
+./scripts/photo.sh evaluate --episodes 50 --save-captures
+./scripts/photo.sh play --checkpoint latest --save-captures runs/photo-preview-captures
+./scripts/photo.sh record --checkpoint latest --seconds 10 --output videos/photo.mp4
+```
+
+The photo baseline combines proportional framing with a rule-based stable-capture
+decision. Artifacts live in `runs/photo/`; saved previews include failed attempts.
+See [photo experiment instructions](experiments/photo.md) for the observation and
+shutter interface, quality criteria, reward, and evaluation protocol.
+
+Both experiments use the existing TensorBoard/tunnel scripts and default playback
+port 8081. Stop other playback on that port before starting another viewer. Use
+their own script entrypoints for training, playback, and recording; the original
+tracking/reacquisition checkpoints retain their existing interfaces.
+
 ## Save a simulation video
 
 Example clip: [Watch the Reachy simulation](reachy.mp4).

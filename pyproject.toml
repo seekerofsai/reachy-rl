@@ -11,7 +11,7 @@ dependencies = [
   "numpy>=2,<3", "scipy>=1.14,<2", "mujoco==3.3.0",
   "gymnasium>=1.1,<2", "stable-baselines3>=2.7,<3",
   "torch>=2.8,<3", "tensorboard>=2.18,<3",
-  "reachy-mini-rust-kinematics>=1.0.3,<2", "viser>=1,<2",
+  "reachy-mini-rust-kinematics>=1.0.3,<2", "viser>=1,<2", "pillow>=12,<14",
 ]
 
 [project.optional-dependencies]

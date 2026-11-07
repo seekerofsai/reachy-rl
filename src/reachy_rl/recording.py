@@ -74,7 +74,7 @@ class MP4Writer:
             self.temporary.unlink(missing_ok=True)
 
 
-def record(args):
+def record(args, simulation=None):
     # Importing here avoids a cycle with the CLI checkpoint helpers.
     from .cli import checkpoint_path, load_config
     from stable_baselines3 import PPO
@@ -87,22 +87,27 @@ def record(args):
         raise ValueError("width and height must be positive even numbers, at least 2")
     if args.distance <= 0 or not math.isfinite(args.distance):
         raise ValueError("distance must be positive and finite")
-    if args.controller == "ppo":
+    if simulation is not None:
+        env, policy = simulation
+        config = env.unwrapped.config
+    elif args.controller == "ppo":
         checkpoint = checkpoint_path(args.checkpoint)
         config = load_config(checkpoint)
         policy = PPO.load(str(checkpoint), device="cpu")
     else:
         config, policy = TaskConfig(), None
-    env = ReachyTrackingEnv(config)
+    if simulation is None:
+        env = ReachyTrackingEnv(config)
+    physical = env.unwrapped
     renderer = None
     writer = None
     completed = False
     try:
-        env.model.vis.global_.offwidth = max(args.width, env.model.vis.global_.offwidth)
-        env.model.vis.global_.offheight = max(args.height, env.model.vis.global_.offheight)
+        physical.model.vis.global_.offwidth = max(args.width, physical.model.vis.global_.offwidth)
+        physical.model.vis.global_.offheight = max(args.height, physical.model.vis.global_.offheight)
         # FFmpeg/output errors should be reported before initializing a graphics context.
         writer = MP4Writer(args.output, args.width, args.height, args.fps, args.overwrite)
-        renderer = mujoco.Renderer(env.model, height=args.height, width=args.width)
+        renderer = mujoco.Renderer(physical.model, height=args.height, width=args.width)
         camera = mujoco.MjvCamera()
         camera.type = mujoco.mjtCamera.mjCAMERA_FREE
         camera.lookat[:] = [0.45, 0, 0.2]
@@ -110,32 +115,40 @@ def record(args):
         camera.azimuth = args.azimuth
         camera.elevation = args.elevation
         episode = 0
-        observation, _ = env.reset(seed=args.seed)
+        observation, info = env.reset(seed=args.seed)
         elapsed = 0.0
+        needs_reset = False
         for index in range(math.ceil(args.seconds * args.fps)):
             # Resample policy time to video time, preserving playback speed at any FPS.
             while elapsed + 1e-9 < index / args.fps:
+                if needs_reset:
+                    episode += 1
+                    observation, info = env.reset(seed=args.seed + episode)
+                    needs_reset = False
                 if policy is not None:
                     action, _ = policy.predict(observation, deterministic=True)
+                elif hasattr(env, "baseline_action"):
+                    action = env.baseline_action()
                 elif args.controller == "proportional":
-                    action = proportional_action(env, observation)
+                    action = proportional_action(physical, observation[-12:])
                 else:
                     action = np.zeros(3)
                 observation, _, terminated, truncated, info = env.step(action)
                 elapsed += config.control_dt
-                if terminated:
+                if terminated and info.get("numerical_failure", False):
                     raise ValueError(f"Simulation terminated during recording: {info}")
-                if truncated:
-                    episode += 1
-                    observation, _ = env.reset(seed=args.seed + episode)
-            renderer.update_scene(env.data, camera=camera)
+                needs_reset = terminated or truncated
+            renderer.update_scene(physical.data, camera=camera)
             scene = renderer.scene
-            if scene.ngeom < scene.maxgeom:
+            if scene.ngeom < scene.maxgeom and not info.get("occluded", False):
                 mujoco.mjv_initGeom(scene.geoms[scene.ngeom], mujoco.mjtGeom.mjGEOM_SPHERE,
-                                   np.array([0.035, 0, 0]), env.target_position,
+                                   np.array([0.035, 0, 0]), physical.target_position,
                                    np.eye(3).ravel(), np.array([1.0, 0.25, 0.15, 1.0]))
                 scene.ngeom += 1
-            writer.write(renderer.render())
+            frame = renderer.render()
+            if hasattr(env, "render_overlay"):
+                frame = env.render_overlay(frame, info)
+            writer.write(frame)
         completed = True
     except BrokenPipeError as error:
         raise ValueError("FFmpeg stopped accepting frames; verify your FFmpeg build supports libx264") from error
