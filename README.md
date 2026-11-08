@@ -17,8 +17,8 @@ this repository from the Mac if it is not already on the Spark:
 
 ```bash
 # On the Mac:
-ssh saiseeker@spark-c64c 'mkdir -p ~/repos'
-scp -r ~/repos/reachy-rl saiseeker@spark-c64c:~/repos/
+ssh user@spark 'mkdir -p ~/repos'
+scp -r ~/repos/reachy-rl user@spark:~/repos/
 
 # On the Spark:
 cd ~/repos/reachy-rl
@@ -260,7 +260,7 @@ use a new name or explicitly pass `--overwrite`.
 Copy the clip to your Mac:
 
 ```bash
-scp saiseeker@spark-c64c:~/repos/reachy-rl/videos/reachy.mp4 ~/Downloads/
+scp user@spark:~/repos/reachy-rl/videos/reachy.mp4 ~/Downloads/
 ```
 
 ## Development and next experiments
